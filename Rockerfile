@@ -1,0 +1,73 @@
+FROM centos:centos7
+
+MAINTAINER Bryan Hunt <bryan.hunt@bet365.com>
+
+#WORKDIR /root
+
+RUN yum install -y epel-release
+
+RUN yum -q -y install openssl curl python python-six python-setuptools ca-certificates jq which unzip
+
+RUN yum -q -y install java-1.8.0-openjdk
+
+#ifdef::docker[]
+## Install Docker for command-line utilities
+#ifdef::centos[]
+#RUN yum install -y docker
+#endif::[]
+#endif::docker[]
+
+ENV RIAK_VERSION={{ .RiakVersion }} 
+
+ENV RIAK_HOME /usr/lib64/riak
+
+COPY rel_to_pkg.sh /tmp/
+
+RUN chmod a+x /tmp/rel_to_pkg.sh && /tmp/rel_to_pkg.sh
+
+ENV PATH $RIAK_HOME/bin:$PATH
+
+RUN curl curl -s https://packagecloud.io/install/repositories/basho/riak/script.rpm.sh | sudo bash
+
+RUN yum install -y {{.RiakPkg}}-{{.RiakVersion}}
+
+## Install the Python client
+#RUN \
+#  cd {{.python_lib_dir}} && \
+#  curl -sSLO https://pypi.python.org/packages/{{.python_version}}/r/riak/riak-{{.riak_client_version}}-py{{.python_version}}.egg && \
+#  curl -sSLO https://pypi.python.org/packages/{{.python_version}}/p/protobuf/protobuf-{{.protobuf_version}}-py{{.python_version}}.egg && \
+#  unzip -o riak-{{.riak_client_version}}-py{{.python_version}}.egg && \
+#  unzip -o protobuf-{{.protobuf_version}}-py{{.python_version}}.egg
+#
+## Expose default ports
+#EXPOSE 8087
+#
+#EXPOSE 8098
+#
+## Expose volumes for data and logs
+#VOLUME /var/log/riak
+#
+#VOLUME /var/lib/riak
+#
+## Install custom start script
+#COPY riak-cluster.sh $RIAK_HOME/riak-cluster.sh
+#
+#RUN chmod a+x $RIAK_HOME/riak-cluster.sh
+#
+## Install custom hooks
+#COPY prestart.d /etc/riak/prestart.d
+#
+#COPY poststart.d /etc/riak/poststart.d
+#
+## Prepare for bootstrapping schemas
+#RUN mkdir -p /etc/riak/schemas
+#
+#WORKDIR /var/lib/riak
+#
+#CMD $RIAK_HOME/riak-cluster.sh
+#
+## Clean up APT cache
+#RUN rm -rf /var/lib/apt/lists/* /tmp/*
+#
+#TAG bet365/riak:{.Riak
+#

@@ -6,7 +6,8 @@ MAINTAINER Bryan Hunt <bryan.hunt@bet365.com>
 
 RUN yum install -y epel-release
 
-RUN yum -q -y install openssl curl python python-six python-setuptools ca-certificates jq which unzip
+# RUN yum -q -y install openssl curl python python-six python-setuptools ca-certificates jq which unzip
+RUN yum -q -y install openssl curl ca-certificates jq which unzip
 
 RUN yum -q -y install java-1.8.0-openjdk
 
@@ -21,13 +22,13 @@ ENV RIAK_VERSION={{ .RiakVersion }}
 
 ENV RIAK_HOME /usr/lib64/riak
 
-COPY rel_to_pkg.sh /tmp/
-
-RUN chmod a+x /tmp/rel_to_pkg.sh && /tmp/rel_to_pkg.sh
+#COPY rel_to_pkg.sh /tmp/
+#
+#RUN chmod a+x /tmp/rel_to_pkg.sh && /tmp/rel_to_pkg.sh
 
 ENV PATH $RIAK_HOME/bin:$PATH
 
-RUN curl curl -s https://packagecloud.io/install/repositories/basho/riak/script.rpm.sh | sudo bash
+RUN curl curl -s https://packagecloud.io/install/repositories/basho/riak/script.rpm.sh | bash
 
 RUN yum install -y {{.RiakPkg}}-{{.RiakVersion}}
 
@@ -40,34 +41,33 @@ RUN yum install -y {{.RiakPkg}}-{{.RiakVersion}}
 #  unzip -o protobuf-{{.protobuf_version}}-py{{.python_version}}.egg
 #
 ## Expose default ports
-#EXPOSE 8087
-#
-#EXPOSE 8098
-#
+EXPOSE 8087
+
+EXPOSE 8098
+
 ## Expose volumes for data and logs
-#VOLUME /var/log/riak
-#
-#VOLUME /var/lib/riak
-#
+VOLUME /var/log/riak
+
+VOLUME /var/lib/riak
+
 ## Install custom start script
-#COPY riak-cluster.sh $RIAK_HOME/riak-cluster.sh
-#
-#RUN chmod a+x $RIAK_HOME/riak-cluster.sh
-#
+COPY riak-cluster.sh $RIAK_HOME/riak-cluster.sh
+
+RUN chmod a+x $RIAK_HOME/riak-cluster.sh
+
 ## Install custom hooks
-#COPY prestart.d /etc/riak/prestart.d
-#
-#COPY poststart.d /etc/riak/poststart.d
-#
+COPY prestart.d /etc/riak/prestart.d
+
+COPY poststart.d /etc/riak/poststart.d
+
 ## Prepare for bootstrapping schemas
-#RUN mkdir -p /etc/riak/schemas
-#
-#WORKDIR /var/lib/riak
-#
-#CMD $RIAK_HOME/riak-cluster.sh
-#
+RUN mkdir -p /etc/riak/schemas
+
+WORKDIR /var/lib/riak
+
+CMD $RIAK_HOME/riak-cluster.sh
+
 ## Clean up APT cache
-#RUN rm -rf /var/lib/apt/lists/* /tmp/*
-#
-#TAG bet365/riak:{.Riak
-#
+RUN rm -rf /var/lib/apt/lists/* /tmp/*
+
+TAG bet365/riak:{{.RiakVersion}}
